@@ -1,0 +1,30 @@
+name: Clean Large Files from History
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  clean-history:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install git-filter-repo
+        run: pip install git-filter-repo
+
+      - name: Remove files larger than 20MB from history
+        run: git filter-repo --strip-blobs-bigger-than 20M --force
+
+      - name: Force push cleaned repo
+        run: |
+          git remote add origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+          git push --force --all
+          git push --force --tags
